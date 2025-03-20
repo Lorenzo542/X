@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Codici Bolla</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gestione Codici Bolla</h1>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="settimanaSelect">Settimana:</label>
+                <select id="settimanaSelect"></select>
+            </div>
+            
+            <div class="control-group">
+                <label for="inputCodice">Codice:</label>
+                <input type="number" id="inputCodice" placeholder="Inizia a digitare..." autocomplete="off">
+                <button id="submit">Elimina</button>
+            </div>
+            
+            <div class="control-group">
+                <label for="fileInput">Importa codici da CSV:</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".csv,.txt,text/csv,application/csv" style="display:none;">
+                    <button type="button" onclick="gestisciImportazione()" class="file-button">Seleziona file</button>
+                    <span id="fileNameDisplay">Nessun file selezionato</span>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button id="esportaBtn">Esporta dati</button>
+                <button id="resetBtn">Reset settimana</button>
+            </div>
+        </div>
+        
+        <div class="results">
+            <h2>Risultati</h2>
+            <div class="codice-lista" id="codiceLista"></div>
+        </div>
+        
+        <footer>
+            <p>© 2025 - Gestione Codici Bolla</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

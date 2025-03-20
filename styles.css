@@ -1,0 +1,348 @@
+:root {
+    --primary-color: #3498db;
+    --primary-dark: #2980b9;
+    --accent-color: #e74c3c;
+    --light-color: #ecf0f1;
+    --dark-color: #2c3e50;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --error-color: #c0392b;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: #f5f7fa;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+h1 {
+    color: var(--primary-dark);
+}
+
+h2 {
+    color: var(--dark-color);
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.controls {
+    margin-bottom: 20px;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+input[type="number"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+button, 
+input[type="submit"] {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+button:hover,
+input[type="submit"]:hover {
+    background-color: var(--primary-dark);
+}
+
+#submit {
+    margin-top: 10px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.actions button {
+    flex: 1;
+}
+
+#esportaBtn {
+    background-color: var(--success-color);
+}
+
+#resetBtn {
+    background-color: var(--warning-color);
+}
+
+.results {
+    margin-top: 30px;
+}
+
+.codice-lista {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: var(--light-color);
+}
+
+ul {
+    list-style-type: none;
+}
+
+li {
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    background-color: white;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+li:hover {
+    background-color: #f5f5f5;
+}
+
+li.attivo {
+    border-left: 3px solid var(--primary-color);
+}
+
+li.eliminato {
+    border-left: 3px solid var(--accent-color);
+    color: #999;
+}
+
+.btn-elimina-rapido {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.btn-elimina-rapido:hover {
+    opacity: 1;
+}
+
+.no-results {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+}
+
+#eliminato {
+    color: #999;
+    text-decoration: line-through;
+}
+
+.stats {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #666;
+    text-align: right;
+}
+
+.messaggio {
+    padding: 10px 15px;
+    margin: 10px 0;
+    border-radius: 4px;
+    text-align: center;
+    animation: fadeIn 0.3s;
+}
+
+.messaggio.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.messaggio.successo {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.messaggio.errore {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.messaggio.fade-out {
+    animation: fadeOut 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+footer {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #999;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+    
+    .actions {
+        flex-direction: column;
+    }
+}
+/* Add these styles to your existing CSS file */
+
+/* Mobile-specific adjustments */
+@media (max-width: 600px) {
+    /* Default state */
+    .controls {
+        transition: all 0.3s ease;
+    }
+    
+    /* Minimized state when input is focused */
+    .controls.minimized {
+        padding: 5px;
+        margin-bottom: 5px;
+    }
+    
+    /* Hide non-essential elements when minimized */
+    .controls.minimized .control-group:not(:nth-child(2)),
+    .controls.minimized .actions {
+        display: none;
+    }
+    
+    /* Keep only the input field visible but compact */
+    .controls.minimized .control-group:nth-child(2) {
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .controls.minimized .control-group:nth-child(2) label {
+        margin-bottom: 0;
+        margin-right: 10px;
+        font-size: 14px;
+    }
+    
+    .controls.minimized #inputCodice {
+        flex: 1;
+        padding: 8px;
+    }
+    
+    .controls.minimized #submit {
+        margin-top: 0;
+        margin-left: 5px;
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+    
+    /* Make results more prominent when input is focused */
+    .results-expanded {
+        margin-top: 10px;
+    }
+    
+    .results-expanded .codice-lista {
+        max-height: 60vh; /* Increase visible area */
+    }
+}
+/* Stili per il pulsante di importazione file */
+.file-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.file-button:hover {
+    background-color: var(--primary-dark);
+}
+
+#fileNameDisplay {
+    font-size: 14px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* Stile responsivo */
+@media (max-width: 600px) {
+    .file-input-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    #fileNameDisplay {
+        margin-top: 5px;
+    }
+}
