@@ -2,6 +2,7 @@
  * Package Tracking Code Manager
  * A web application to manage tracking codes by week with quantity support
  */
+import firebaseManager from './firebase-config.js';
 
 // DOM Elements
 const inputCode = document.getElementById("inputCode");
@@ -18,10 +19,12 @@ const exportBtn = document.getElementById("exportBtn");
 let selectedWeek;
 let activeCodes = [];
 let deletedCodes = [];
+let currentUser = null;
+let syncEnabled = false;
 
 // ===== INITIALIZATION =====
 document.addEventListener("DOMContentLoaded", function() {
-    // Populate week selector (last 10 weeks and next 52 weeks)
+    // Initialize the app
     populateWeekSelect();
     
     // Set current week
@@ -43,6 +46,12 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // Set up mobile optimizations
     setupMobileBehavior();
+    
+    // Setup authentication
+    setupAuth();
+    
+    // Add sync settings
+    addSyncSettings();
     
     // Initial focus
     inputCode.focus();
@@ -92,19 +101,6 @@ function loadWeekData() {
     if (deletedCodes.length > 0 && typeof deletedCodes[0] === 'string') {
         deletedCodes = deletedCodes.map(code => ({ code: code, quantity: 1 }));
     }
-}
-
-/**
- * Change the currently selected week
- */
-function changeWeek() {
-    saveData(); // Save data from previous week
-    selectedWeek = parseInt(weekSelect.value);
-    loadWeekData();
-    showResults(filterCodes(inputCode.value));
-    
-    // Visual feedback
-    showMessage(`Loaded data for week ${selectedWeek}`);
 }
 
 /**
@@ -249,9 +245,6 @@ function populateWeekSelect() {
  * Get data from Local Storage
  */
 function getWeekData(week) {
-    console.log(`Loading data for week ${selectedWeek}`);
-    console.log(`Active Codes: ${localStorage.getItem(`activeCodes_${selectedWeek}`)}`);
-    console.log(`Deleted Codes: ${localStorage.getItem(`deletedCodes_${selectedWeek}`)}`);
     return {
         active: JSON.parse(localStorage.getItem(`activeCodes_${week}`)) || [],
         deleted: JSON.parse(localStorage.getItem(`deletedCodes_${week}`)) || []
@@ -497,7 +490,10 @@ function importCSV(event) {
     if (!file) return;
     
     // Update file name display
-    document.getElementById("fileNameDisplay").textContent = file.name;
+    const fileNameDisplay = document.getElementById("fileNameDisplay");
+    if (fileNameDisplay) {
+        fileNameDisplay.textContent = file.name;
+    }
     
     // Check file type with relaxed constraints
     const isCSV = 
@@ -659,9 +655,27 @@ function showMessage(message, type = "info") {
 }
 
 /**
- * Save data to Local Storage
+ * Save data to Local Storage and Firebase if enabled
  */
 function saveData() {
+    // Save to local storage
+    localStorage.setItem(`activeCodes_${selectedWeek}`, JSON.stringify(activeCodes));
+    localStorage.setItem(`deletedCodes_${selectedWeek}`, JSON.stringify(deletedCodes));
+    
+    // If sync is enabled, also save to Firebase
+    if (syncEnabled && currentUser) {
+        firebaseManager.saveWeekData(selectedWeek.toString(), activeCodes, deletedCodes)
+            .catch((error) => {
+                console.error("Error saving to cloud:", error);
+                showMessage("Error syncing data: " + error.message, "error");
+            });
+    }
+}
+
+/**
+ * Save to local storage only (no cloud sync)
+ */
+function saveToLocalOnly() {
     localStorage.setItem(`activeCodes_${selectedWeek}`, JSON.stringify(activeCodes));
     localStorage.setItem(`deletedCodes_${selectedWeek}`, JSON.stringify(deletedCodes));
 }
@@ -674,6 +688,8 @@ function setupMobileBehavior() {
     if (window.innerWidth <= 600) {
         const controlsSection = document.querySelector('.controls');
         const resultsSection = document.querySelector('.results');
+        
+        if (!controlsSection || !resultsSection) return;
         
         // When input is focused
         inputCode.addEventListener('focus', function() {
@@ -725,3 +741,185 @@ Date.prototype.getWeekNumber = function() {
 window.addEventListener('resize', function() {
     setupMobileBehavior();
 });
+
+// ===== FIREBASE INTEGRATION =====
+
+/**
+ * Set up authentication UI and logic
+ */
+function setupAuth() {
+    // Add login button to header
+    const header = document.querySelector('header');
+    if (!header) return;
+    
+    // Create login button if it doesn't exist
+    let loginButton = document.getElementById('loginButton');
+    if (!loginButton) {
+        loginButton = document.createElement('button');
+        loginButton.textContent = 'Login to Sync';
+        loginButton.id = 'loginButton';
+        loginButton.className = 'sync-button';
+        header.appendChild(loginButton);
+    }
+    
+    // Create sync status indicator if it doesn't exist
+    let syncStatus = document.getElementById('syncStatus');
+    if (!syncStatus) {
+        syncStatus = document.createElement('div');
+        syncStatus.id = 'syncStatus';
+        syncStatus.className = 'sync-status offline';
+        syncStatus.innerHTML = '<span>Offline</span>';
+        header.appendChild(syncStatus);
+    }
+    
+    // Add login click handler
+    loginButton.addEventListener('click', handleLogin);
+    
+    // Register for Firebase auth changes
+    firebaseManager.addListener(handleFirebaseEvent);
+}
+
+/**
+ * Handle Firebase events
+ */
+function handleFirebaseEvent(event) {
+    if (event.type === 'auth-change') {
+        // Update user status
+        currentUser = event.user;
+        syncEnabled = event.isLoggedIn;
+        
+        // Load data from cloud if logged in
+        if (syncEnabled) {
+            loadCloudData();
+        }
+    } else if (event.type === 'data-loaded' && event.weekId === selectedWeek.toString()) {
+        // Data loaded from cloud
+        const data = event.data;
+        
+        // Merge with local data or replace entirely
+        const mergeStrategy = localStorage.getItem('dataMergeStrategy') || 'replace';
+        
+        if (mergeStrategy === 'replace') {
+            // Replace local data with cloud data
+            activeCodes = data.activeCodes || [];
+            deletedCodes = data.deletedCodes || [];
+            saveToLocalOnly(); // Save to local storage only
+            showResults(filterCodes(inputCode.value));
+            showMessage("Loaded data from cloud", "success");
+        } else {
+            // Merge cloud and local data
+            const mergedData = firebaseManager.mergeData(
+                selectedWeek.toString(),
+                activeCodes,
+                deletedCodes,
+                data.activeCodes,
+                data.deletedCodes,
+                mergeStrategy
+            );
+            
+            activeCodes = mergedData.activeCodes;
+            deletedCodes = mergedData.deletedCodes;
+            saveToLocalOnly();
+            showResults(filterCodes(inputCode.value));
+            showMessage("Merged local and cloud data", "success");
+        }
+    }
+}
+
+/**
+ * Handle login/logout button click
+ */
+function handleLogin() {
+    if (currentUser) {
+        // Log out
+        firebaseManager.signOut()
+            .then(() => {
+                showMessage("Logged out successfully", "info");
+            })
+            .catch((error) => {
+                showMessage("Error logging out: " + error.message, "error");
+            });
+    } else {
+        // Show auth modal for login/signup
+        import('./auth-forms.js')
+            .then(module => {
+                module.showAuthModal();
+            })
+            .catch(error => {
+                console.error("Error loading auth forms:", error);
+                showMessage("Error loading authentication form", "error");
+            });
+    }
+}
+
+/**
+ * Load data from Firebase
+ */
+function loadCloudData() {
+    if (!syncEnabled || !currentUser) return;
+    
+    firebaseManager.loadWeekData(selectedWeek.toString())
+        .catch((error) => {
+            console.error("Error loading cloud data:", error);
+            showMessage("Error loading cloud data: " + error.message, "error");
+        });
+}
+
+/**
+ * Update your changeWeek function
+ */
+function changeWeek() {
+    saveData(); // Save data from previous week
+    selectedWeek = parseInt(weekSelect.value);
+    
+    // First load from local storage
+    loadWeekData();
+    
+    // Then check for cloud data if sync is enabled
+    if (syncEnabled && currentUser) {
+        loadCloudData();
+    } else {
+        // Just show local data
+        showResults(filterCodes(inputCode.value));
+        showMessage(`Loaded data for week ${selectedWeek}`);
+    }
+}
+
+/**
+ * Add settings for sync
+ */
+function addSyncSettings() {
+    // Create settings section
+    const settingsDiv = document.createElement('div');
+    settingsDiv.className = 'settings-section';
+    settingsDiv.innerHTML = `
+        <h2>Sync Settings</h2>
+        <div class="control-group">
+            <label for="mergeStrategy">When syncing data:</label>
+            <select id="mergeStrategy">
+                <option value="replace">Cloud data overrides local data</option>
+                <option value="merge">Merge cloud and local data (keep both)</option>
+            </select>
+        </div>
+        <button id="forceSyncButton">Force Sync Now</button>
+    `;
+    
+    // Insert before footer
+    const footer = document.querySelector('footer');
+    footer.parentNode.insertBefore(settingsDiv, footer);
+    
+    // Set up event handlers
+    const mergeStrategy = document.getElementById('mergeStrategy');
+    mergeStrategy.value = localStorage.getItem('dataMergeStrategy') || 'replace';
+    mergeStrategy.addEventListener('change', function() {
+        localStorage.setItem('dataMergeStrategy', this.value);
+    });
+    
+    document.getElementById('forceSyncButton').addEventListener('click', function() {
+        if (syncEnabled && currentUser) {
+            loadCloudData();
+        } else {
+            showMessage("Please login to sync data", "info");
+        }
+    });
+}
