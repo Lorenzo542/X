@@ -6,7 +6,6 @@ import firebaseManager from './firebase-config.js';
 
 // DOM Elements
 const inputCode = document.getElementById("inputCode");
-const inputQuantity = document.getElementById("inputQuantity");
 const codeList = document.getElementById("codeList");
 const deleteBtn = document.getElementById("submit");
 const weekSelect = document.getElementById("weekSelect");
@@ -34,9 +33,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // Initialize week data
     selectedWeek = currentWeek;
     loadWeekData();
-    
-    // Set default quantity
-    inputQuantity.value = "1";
     
     // Display initial data
     showResults(filterCodes(inputCode.value));
@@ -113,12 +109,9 @@ function handleDeletion() {
         return;
     }
     
-    // Get quantity to delete (default to 1 if not specified)
-    const quantityToDelete = parseInt(inputQuantity.value) || 1;
-    
-    deleteCode(codeToDelete, quantityToDelete);
+    // Always delete the entire item
+    deleteCode(codeToDelete);
     inputCode.value = "";
-    inputQuantity.value = "1";
     inputCode.focus();
 }
 
@@ -305,8 +298,11 @@ function showResults(results) {
             btnDecrease.title = "Decrease quantity";
             btnDecrease.onclick = function(e) {
                 e.stopPropagation();
+                // Decrease by 1, and if it reaches 0, delete the item
                 if (item.quantity > 1) {
                     updateQuantity(item.code, item.quantity - 1);
+                } else {
+                    deleteCode(item.code);
                 }
             };
             
@@ -317,7 +313,7 @@ function showResults(results) {
             btnDelete.title = "Delete code";
             btnDelete.onclick = function(e) {
                 e.stopPropagation();
-                deleteCode(item.code, item.quantity); // Delete entire quantity
+                deleteCode(item.code);
             };
             
             const buttonGroup = document.createElement("div");
@@ -332,7 +328,6 @@ function showResults(results) {
         li.addEventListener("click", function(e) {
             if (!e.target.classList.contains('qty-btn') && e.target !== this.querySelector('.quick-delete-btn')) {
                 inputCode.value = item.code;
-                inputQuantity.value = item.quantity;
                 showResults(filterCodes(item.code));
                 inputCode.focus();
             }
@@ -379,74 +374,29 @@ function updateQuantity(code, newQuantity) {
 /**
  * Delete code and save
  * @param {string} code - The code to delete
- * @param {number} quantity - The quantity to delete (default: entire quantity)
  */
-function deleteCode(code, quantityToDelete = null) {
+function deleteCode(code) {
     const index = activeCodes.findIndex(item => item.code === code);
     
     if (index !== -1) {
         const currentItem = activeCodes[index];
         
-        // If quantityToDelete is null or undefined, delete the entire item
-        if (quantityToDelete === null || quantityToDelete === undefined) {
-            activeCodes.splice(index, 1);
-            deletedCodes.push({...currentItem}); // Clone the item
-            saveData();
-            showMessage(`Code ${code} marked as deleted`, "success");
-        } else {
-            // Partial deletion
-            if (quantityToDelete >= currentItem.quantity) {
-                // Delete entire quantity
-                activeCodes.splice(index, 1);
-                deletedCodes.push({...currentItem}); // Clone the item
-                saveData();
-                showMessage(`Code ${code} marked as deleted (all ${currentItem.quantity} items)`, "success");
-            } else {
-                // Reduce the quantity in active codes
-                currentItem.quantity -= quantityToDelete;
-                
-                // Check if the code already exists in deleted codes
-                const deletedIndex = deletedCodes.findIndex(item => item.code === code);
-                if (deletedIndex !== -1) {
-                    // Add to existing deleted entry
-                    deletedCodes[deletedIndex].quantity += quantityToDelete;
-                } else {
-                    // Create a new deleted entry
-                    deletedCodes.push({
-                        code: code,
-                        quantity: quantityToDelete
-                    });
-                }
-                
-                saveData();
-                showMessage(`Deleted ${quantityToDelete} items of code ${code}`, "success");
-            }
-        }
+        // Delete entire item
+        activeCodes.splice(index, 1);
+        deletedCodes.push({...currentItem}); // Clone the item
+        saveData();
+        showMessage(`Code ${code} marked as deleted`, "error");
         
         showResults(filterCodes(inputCode.value));
     } else if (!deletedCodes.some(item => item.code === code)) {
-        // Check if we have input in the quantity field to add a new deleted code
-        const quantity = parseInt(inputQuantity.value) || 1;
-        deletedCodes.push({ code, quantity });
+        // Add directly to deleted list
+        deletedCodes.push({ code, quantity: 1 });
         saveData();
         showMessage(`Added code ${code} directly to deleted list`, "info");
         showResults(filterCodes(inputCode.value));
     } else {
-        // Code is already in the deleted list
-        // Check if we want to add more to the deleted quantity
-        if (quantityToDelete !== null && quantityToDelete !== undefined) {
-            const deletedIndex = deletedCodes.findIndex(item => item.code === code);
-            if (deletedIndex !== -1) {
-                deletedCodes[deletedIndex].quantity += quantityToDelete;
-                saveData();
-                showMessage(`Added ${quantityToDelete} more items to deleted code ${code}`, "info");
-                showResults(filterCodes(inputCode.value));
-            } else {
-                showMessage(`Code ${code} already deleted`, "info");
-            }
-        } else {
-            showMessage(`Code ${code} already deleted`, "info");
-        }
+        // Already deleted
+        showMessage(`Code ${code} already deleted`, "info");
     }
 }
 
@@ -629,35 +579,10 @@ function importCSV(event) {
 }
 
 /**
- * Show feedback messages (only for critical information)
+ * Show feedback messages (replaced with console.log)
  */
 function showMessage(message, type = "info") {
-    // Only show critical messages
-    if (type !== "error" && type !== "critical-info") {
-        console.log(message); // Log to console instead
-        return;
-    }
-    
-    // Remove previous messages
-    const oldMessage = document.querySelector(".message");
-    if (oldMessage) {
-        oldMessage.remove();
-    }
-    
-    // Create new message
-    const messageDiv = document.createElement("div");
-    messageDiv.className = `message ${type}`;
-    messageDiv.textContent = message;
-    
-    // Insert after h1
-    const h1 = document.querySelector("h1");
-    h1.parentNode.insertBefore(messageDiv, h1.nextSibling);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        messageDiv.classList.add("fade-out");
-        setTimeout(() => messageDiv.remove(), 500);
-    }, 3000);
+    console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
 /**
@@ -687,7 +612,7 @@ function saveToLocalOnly() {
 }
 
 /**
- * Mobile focus behavior
+ * Mobile focus behavior (simplified)
  */
 function setupMobileBehavior() {
     // Only apply these changes on mobile devices
@@ -701,14 +626,6 @@ function setupMobileBehavior() {
         inputCode.addEventListener('focus', function() {
             controlsSection.classList.add('minimized');
             resultsSection.classList.add('results-expanded');
-            
-            // Scroll to make sure input and results are visible
-            setTimeout(() => {
-                window.scrollTo({
-                    top: inputCode.getBoundingClientRect().top + window.scrollY - 20,
-                    behavior: 'smooth'
-                });
-            }, 300);
         });
         
         // When input loses focus
@@ -721,7 +638,7 @@ function setupMobileBehavior() {
                     controlsSection.classList.remove('minimized');
                     resultsSection.classList.remove('results-expanded');
                 }
-            }, 200);
+            }, 100); // Reduced timeout
         });
         
         // Make sure results stay visible when interacting with them

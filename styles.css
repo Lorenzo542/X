@@ -10,7 +10,7 @@
     --dark-color: #34495e;
     --gray-color: #95a5a6;
     --border-radius: 4px;
-    --transition-speed: 0.3s;
+    /* Removed transition speed variable */
 }
 
 * {
@@ -56,12 +56,12 @@ header h1 {
 .controls {
     padding: 20px;
     border-bottom: 1px solid #eee;
-    transition: all var(--transition-speed) ease-in-out;
+    /* Removed transition */
 }
 
 .minimized {
     padding: 10px;
-    transition: all var(--transition-speed) ease-in-out;
+    /* Removed transition */
 }
 
 .control-group {
@@ -115,7 +115,7 @@ button {
     color: white;
     border: none;
     cursor: pointer;
-    transition: background-color 0.2s;
+    /* Removed transition */
     margin-top: 10px;
 }
 
@@ -172,13 +172,13 @@ button:active {
 
 .results {
     padding: 20px;
-    transition: all var(--transition-speed) ease-in-out;
+    /* Removed transition */
 }
 
 .results-expanded {
     max-height: calc(100vh - 200px);
     overflow-y: auto;
-    transition: all var(--transition-speed) ease-in-out;
+    /* Removed transition */
 }
 
 .results h2 {
@@ -201,7 +201,7 @@ button:active {
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    transition: background-color 0.2s;
+    /* Removed transition */
 }
 
 .code-list li:hover {
@@ -239,6 +239,13 @@ button:active {
     color: var(--dark-color);
 }
 
+.qty-decrease {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0px 9px;
+    line-height: 1.2;
+}
+
 .qty-increase:hover {
     background-color: var(--success-color);
     color: white;
@@ -273,7 +280,8 @@ button:active {
     margin: 10px 0;
     border-radius: var(--border-radius);
     text-align: center;
-    transition: opacity 0.5s;
+    /* Keep this transition but make it faster */
+    transition: opacity 0.2s;
 }
 
 .success {
