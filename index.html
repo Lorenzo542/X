@@ -1,51 +1,51 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestione Codici Bolla</title>
+    <title>Package Tracking Code Manager</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Gestione Codici Bolla</h1>
+            <h1>Package Tracking Code Manager</h1>
         </header>
         
         <div class="controls">
             <div class="control-group">
-                <label for="settimanaSelect">Settimana:</label>
-                <select id="settimanaSelect"></select>
+                <label for="weekSelect">Week:</label>
+                <select id="weekSelect"></select>
             </div>
             
             <div class="control-group">
-                <label for="inputCodice">Codice:</label>
-                <input type="number" id="inputCodice" placeholder="Inizia a digitare..." autocomplete="off">
-                <button id="submit">Elimina</button>
+                <label for="inputCode">Code:</label>
+                <input type="number" id="inputCode" placeholder="Start typing..." autocomplete="off">
+                <button id="submit">Delete</button>
             </div>
             
             <div class="control-group">
-                <label for="fileInput">Importa codici da CSV:</label>
+                <label for="fileInput">Import codes from CSV:</label>
                 <div class="file-input-wrapper">
                     <input type="file" id="fileInput" accept=".csv,.txt,text/csv,application/csv" style="display:none;">
-                    <button type="button" onclick="gestisciImportazione()" class="file-button">Seleziona file</button>
-                    <span id="fileNameDisplay">Nessun file selezionato</span>
+                    <button type="button" id="importButton" class="file-button">Select file</button>
+                    <span id="fileNameDisplay">No file selected</span>
                 </div>
             </div>
             
             <div class="actions">
-                <button id="esportaBtn">Esporta dati</button>
-                <button id="resetBtn">Reset settimana!</button>
+                <button id="exportBtn">Export data</button>
+                <button id="resetBtn">Reset week!</button>
             </div>
         </div>
         
         <div class="results">
-            <h2>Risultati</h2>
-            <div class="codice-lista" id="codiceLista"></div>
+            <h2>Results</h2>
+            <div class="code-list" id="codeList"></div>
         </div>
         
         <footer>
-            <p>© 2025 - Gestione Codici Bolla</p>
+            <p>© 2025 - Package Tracking Code Manager</p>
         </footer>
     </div>
 

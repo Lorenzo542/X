@@ -1,272 +1,351 @@
-// Elementi HTML
-const inputCodice = document.getElementById("inputCodice");
-const codiceLista = document.getElementById("codiceLista");
-const eliminaBtn = document.getElementById("submit");
-const settimanaSelect = document.getElementById("settimanaSelect");
+/**
+ * Package Tracking Code Manager
+ * A web application to manage tracking codes by week
+ */
+
+// DOM Elements
+const inputCode = document.getElementById("inputCode");
+const codeList = document.getElementById("codeList");
+const deleteBtn = document.getElementById("submit");
+const weekSelect = document.getElementById("weekSelect");
 const fileInput = document.getElementById("fileInput");
+const importButton = document.getElementById("importButton");
 const resetBtn = document.getElementById("resetBtn");
-const esportaBtn = document.getElementById("esportaBtn");
+const exportBtn = document.getElementById("exportBtn");
 
-// Variabili globali
-let settimanaSelezionata;
-let codiciAttivi = [];
-let codiciEliminati = [];
+// Global variables
+let selectedWeek;
+let activeCodes = [];
+let deletedCodes = [];
 
-// Inizializzazione
+// ===== INITIALIZATION =====
 document.addEventListener("DOMContentLoaded", function() {
-    // Popola il selettore delle settimane (ultime 10 settimane)
-    popolaSettimaneSelect();
+    // Populate week selector (last 10 weeks and next 52 weeks)
+    populateWeekSelect();
     
-    // Settimana corrente
-    const settimanaCorrente = new Date().getWeekNumber();
-    settimanaSelect.value = settimanaCorrente;
+    // Set current week
+    const currentWeek = new Date().getWeekNumber();
+    weekSelect.value = currentWeek;
     
-    // Inizializza dati settimana
-    settimanaSelezionata = settimanaCorrente;
-    const datiSettimana = getDatiSettimana(settimanaSelezionata);
-    codiciAttivi = datiSettimana.attivi;
-    codiciEliminati = datiSettimana.eliminati;
+    // Initialize week data
+    selectedWeek = currentWeek;
+    loadWeekData();
     
-    // Mostra i dati iniziali
-    mostraRisultati(filtraCodici(inputCodice.value));
+    // Display initial data
+    showResults(filterCodes(inputCode.value));
     
-    // Eventi
-    settimanaSelect.addEventListener("change", cambiaSettimana);
-    eliminaBtn.addEventListener("click", gestisciEliminazione);
-    inputCodice.addEventListener("input", gestisciInput);
-    fileInput.addEventListener("change", importaCSV);
-    resetBtn.addEventListener("click", resetSettimana);
-    esportaBtn.addEventListener("click", esportaDati);
+    // Set up event listeners
+    setupEventListeners();
     
-    // Focus iniziale sull'input
-    inputCodice.focus();
+    // Set up mobile optimizations
+    setupMobileBehavior();
+    
+    // Initial focus
+    inputCode.focus();
 });
 
-// Funzioni di gestione eventi
-function cambiaSettimana() {
-    salvaDati(); // Salva i dati della settimana precedente
-    settimanaSelezionata = parseInt(settimanaSelect.value);
-    const datiSettimana = getDatiSettimana(settimanaSelezionata);
-    codiciAttivi = datiSettimana.attivi;
-    codiciEliminati = datiSettimana.eliminati;
-    mostraRisultati(filtraCodici(inputCodice.value));
+// ===== HELPER FUNCTIONS =====
+
+/**
+ * Set up all event listeners for the application
+ */
+function setupEventListeners() {
+    weekSelect.addEventListener("change", changeWeek);
+    deleteBtn.addEventListener("click", handleDeletion);
+    inputCode.addEventListener("input", handleInput);
+    inputCode.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            handleDeletion();
+        }
+    });
+    importButton.addEventListener("click", handleImportClick);
+    fileInput.addEventListener("change", importCSV);
+    resetBtn.addEventListener("click", resetWeek);
+    exportBtn.addEventListener("click", exportData);
     
-    // Feedback visivo
-    mostraMessaggio(`Caricati dati della settimana ${settimanaSelezionata}`);
+    // Add keyboard shortcuts
+    document.addEventListener("keydown", function(e) {
+        // Ctrl+S to export data
+        if (e.ctrlKey && e.key === "s") {
+            e.preventDefault();
+            exportData();
+        }
+    });
 }
 
-function gestisciEliminazione() {
-    const codiceDaEliminare = inputCodice.value.trim();
-    if (!codiceDaEliminare) {
-        mostraMessaggio("Inserisci un codice da eliminare", "errore");
+/**
+ * Load data for the currently selected week
+ */
+function loadWeekData() {
+    const weekData = getWeekData(selectedWeek);
+    activeCodes = weekData.active;
+    deletedCodes = weekData.deleted;
+}
+
+/**
+ * Change the currently selected week
+ */
+function changeWeek() {
+    saveData(); // Save data from previous week
+    selectedWeek = parseInt(weekSelect.value);
+    loadWeekData();
+    showResults(filterCodes(inputCode.value));
+    
+    // Visual feedback
+    showMessage(`Loaded data for week ${selectedWeek}`);
+}
+
+/**
+ * Handle code deletion
+ */
+function handleDeletion() {
+    const codeToDelete = inputCode.value.trim();
+    if (!codeToDelete) {
+        showMessage("Please enter a code to delete", "error");
         return;
     }
     
-    eliminaCodice(codiceDaEliminare);
-    inputCodice.value = "";
-    inputCodice.focus();
+    deleteCode(codeToDelete);
+    inputCode.value = "";
+    inputCode.focus();
 }
 
-function gestisciInput() {
-    mostraRisultati(filtraCodici(inputCodice.value));
+/**
+ * Handle input changes
+ */
+function handleInput() {
+    showResults(filterCodes(inputCode.value));
 }
 
-// Reset dati settimana corrente
-function resetSettimana() {
-    // Chiedi conferma
-    if (!confirm(`Sei sicuro di voler resettare tutti i dati della settimana ${settimanaSelezionata}? Questa azione non può essere annullata.`)) {
-            return;
+/**
+ * Handle import button click
+ */
+function handleImportClick() {
+    fileInput.click();
+}
+
+/**
+ * Reset current week data
+ */
+function resetWeek() {
+    // Ask for confirmation
+    if (!confirm(`Are you sure you want to reset all data for week ${selectedWeek}? This action cannot be undone.`)) {
+        return;
     }
-    if (!confirm(`ATTENZIONE! Tutti i codici attivi ed eliminati saranno cancellati.
-    
-Procedi solo se hai una copia di backup.`)) {
-        return; // Esci se l'utente annulla
+    if (!confirm(`WARNING! All active and deleted codes will be erased.\n\nOnly proceed if you have a backup copy.`)) {
+        return;
     }
     
-    // Reset dati
-    codiciAttivi = [];
-    codiciEliminati = [];
+    // Reset data
+    activeCodes = [];
+    deletedCodes = [];
     
-    // Salva e aggiorna UI
-    salvaDati();
-    mostraRisultati([]);
-    mostraMessaggio(`Dati della settimana ${settimanaSelezionata} resettati con successo`, "successo");
+    // Save and update UI
+    saveData();
+    showResults([]);
+    showMessage(`Week ${selectedWeek} data has been successfully reset`, "success");
     
-    // Pulisci l'input
-    inputCodice.value = "";
-    inputCodice.focus();
+    // Clear input
+    inputCode.value = "";
+    inputCode.focus();
 }
 
-// Esporta dati in CSV
-// Funzione di esportazione migliorata
-function esportaDati() {
-    // Verifica se ci sono dati da esportare
-    if (codiciAttivi.length === 0 && codiciEliminati.length === 0) {
-        mostraMessaggio("Non ci sono dati da esportare", "info");
+/**
+ * Export data to CSV
+ */
+function exportData() {
+    // Check if there is data to export
+    if (activeCodes.length === 0 && deletedCodes.length === 0) {
+        showMessage("No data to export", "info");
         return;
     }
     
     try {
-        // Prepara i dati per il CSV
+        // Prepare data for CSV
         let csvRows = [];
         
-        // Aggiungi intestazioni
-        csvRows.push("Codice,Stato");
+        // Add headers
+        csvRows.push("Code,Status");
         
-        // Aggiungi codici attivi
-        codiciAttivi.forEach(codice => {
-            csvRows.push(`${codice},Attivo`);
+        // Add active codes
+        activeCodes.forEach(code => {
+            csvRows.push(`${code},Active`);
         });
         
-        // Aggiungi codici eliminati
-        codiciEliminati.forEach(codice => {
-            csvRows.push(`${codice},Eliminato`);
+        // Add deleted codes
+        deletedCodes.forEach(code => {
+            csvRows.push(`${code},Deleted`);
         });
         
-        // Converti l'array in una stringa CSV
+        // Convert array to CSV string
         const csvString = csvRows.join('\n');
         
-        // Crea un Blob con i dati CSV
+        // Create a Blob with the CSV data
         const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
         
-        // Crea URL per il download
+        // Create URL for download
         const url = URL.createObjectURL(blob);
         
-        // Crea e configura l'elemento per il download
+        // Create and configure download element
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `codici_bolla_settimana_${settimanaSelezionata}.csv`);
+        link.setAttribute("download", `tracking_codes_week_${selectedWeek}.csv`);
         link.style.visibility = 'hidden';
         
-        // Aggiungi al DOM, avvia il download e rimuovi
+        // Add to DOM, start download and remove
         document.body.appendChild(link);
         link.click();
         
-        // Pulizia
+        // Cleanup
         setTimeout(() => {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }, 300);
         
-        mostraMessaggio("Dati esportati correttamente", "successo");
+        showMessage("Data exported successfully", "success");
     } catch (error) {
-        console.error("Errore nell'esportazione:", error);
-        mostraMessaggio("Errore durante l'esportazione: " + error.message, "errore");
+        console.error("Export error:", error);
+        showMessage("Error during export: " + error.message, "error");
     }
 }
 
-// Popola il selettore delle settimane
-function popolaSettimaneSelect() {
-    const oggi = new Date();
-    const settimanaCorrente = oggi.getWeekNumber();
-    const anno = oggi.getFullYear();
+/**
+ * Populate the week selector dropdown
+ */
+function populateWeekSelect() {
+    const today = new Date();
+    const currentWeek = today.getWeekNumber();
+    const year = today.getFullYear();
     
-    // Mostra le ultime 10 settimane e le prossime 2
-    for (let i = settimanaCorrente - 10; i <= settimanaCorrente + 52; i++) {
+    // Show last 10 weeks and next 52 weeks
+    for (let i = currentWeek - 10; i <= currentWeek + 52; i++) {
         if (i > 0 && i <= 52) {
             const option = document.createElement("option");
             option.value = i;
-            option.textContent = `Settimana ${i} (${anno})`;
-            settimanaSelect.appendChild(option);
+            option.textContent = `Week ${i} (${year})`;
+            weekSelect.appendChild(option);
         }
     }
 }
 
-// Recupera i dati dal Local Storage
-function getDatiSettimana(settimana) {
+/**
+ * Get data from Local Storage
+ */
+function getWeekData(week) {
     return {
-        attivi: JSON.parse(localStorage.getItem(`codiciAttivi_${settimana}`)) || [],
-        eliminati: JSON.parse(localStorage.getItem(`codiciEliminati_${settimana}`)) || []
+        active: JSON.parse(localStorage.getItem(`activeCodes_${week}`)) || [],
+        deleted: JSON.parse(localStorage.getItem(`deletedCodes_${week}`)) || []
     };
 }
 
-// Filtra i codici attivi ed eliminati
-function filtraCodici(input) {
-    input = input.trim().toUpperCase(); // Normalizza l'input
-    return [...codiciAttivi, ...codiciEliminati].filter(codice => 
-        codice.toUpperCase().includes(input)
+/**
+ * Filter active and deleted codes
+ */
+function filterCodes(input) {
+    input = input.trim().toUpperCase(); // Normalize input
+    return [...activeCodes, ...deletedCodes].filter(code => 
+        code.toUpperCase().includes(input)
     );
 }
 
-// Mostra i risultati filtrati
-function mostraRisultati(risultati) {
-    codiceLista.innerHTML = "";
+/**
+ * Show filtered results
+ */
+function showResults(results) {
+    codeList.innerHTML = "";
     
-    if (risultati.length === 0) {
-        codiceLista.innerHTML = "<p class='no-results'>Nessun codice trovato.</p>";
+    if (results.length === 0) {
+        codeList.innerHTML = "<p class='no-results'>No codes found.</p>";
         return;
     }
     
     const ul = document.createElement("ul");
-    risultati.forEach(codice => {
+    results.forEach(code => {
         const li = document.createElement("li");
         
-        if (codiciEliminati.includes(codice)) {
-            li.innerHTML = `<s id="eliminato">${codice}</s>`;
-            li.className = "eliminato";
+        if (deletedCodes.includes(code)) {
+            li.innerHTML = `<s id="deleted">${code}</s>`;
+            li.className = "deleted";
         } else {
-            li.textContent = codice;
-            li.className = "attivo";
+            li.textContent = code;
+            li.className = "active";
             
-            // Aggiungi pulsante di eliminazione rapida
-            const btnElimina = document.createElement("button");
-            btnElimina.textContent = "✕";
-            btnElimina.className = "btn-elimina-rapido";
-            btnElimina.onclick = function() {
-                eliminaCodice(codice);
+            // Add quick delete button
+            const btnDelete = document.createElement("button");
+            btnDelete.textContent = "✕";
+            btnDelete.className = "quick-delete-btn";
+            btnDelete.title = "Delete code";
+            btnDelete.onclick = function(e) {
+                e.stopPropagation();
+                deleteCode(code);
             };
-            li.appendChild(btnElimina);
+            li.appendChild(btnDelete);
         }
         
-        // Onclick per selezionare il codice
+        // Click to select code
         li.addEventListener("click", function(e) {
-            if (e.target !== this.querySelector('.btn-elimina-rapido')) {
-                inputCodice.value = codice;
-                mostraRisultati(filtraCodici(codice));
+            if (e.target !== this.querySelector('.quick-delete-btn')) {
+                inputCode.value = code;
+                showResults(filterCodes(code));
+                inputCode.focus();
             }
         });
         
         ul.appendChild(li);
     });
     
-    codiceLista.appendChild(ul);
+    codeList.appendChild(ul);
     
-    // Aggiungi contatore
+    // Add counter
     const statsDiv = document.createElement("div");
     statsDiv.className = "stats";
     statsDiv.innerHTML = `
-        <p>Risultati: ${risultati.length} codici 
-        (${risultati.filter(c => !codiciEliminati.includes(c)).length} attivi, 
-        ${risultati.filter(c => codiciEliminati.includes(c)).length} eliminati)</p>
+        <p>Results: ${results.length} codes 
+        (${results.filter(c => !deletedCodes.includes(c)).length} active, 
+        ${results.filter(c => deletedCodes.includes(c)).length} deleted)</p>
     `;
-    codiceLista.appendChild(statsDiv);
+    codeList.appendChild(statsDiv);
 }
 
-// Elimina codice e salva
-function eliminaCodice(codice) {
-    const index = codiciAttivi.indexOf(codice);
+/**
+ * Delete code and save
+ */
+function deleteCode(code) {
+    const index = activeCodes.indexOf(code);
     
     if (index !== -1) { 
-        codiciAttivi.splice(index, 1);
-        codiciEliminati.push(codice);
-        salvaDati();
-        mostraMessaggio(`Codice ${codice} contrassegnato come eliminato`, "successo");
-        mostraRisultati(filtraCodici(inputCodice.value));
-    } else if (!codiciEliminati.includes(codice)) {
-        mostraMessaggio(`Codice ${codice} non trovato nel database`, "errore");
+        activeCodes.splice(index, 1);
+        deletedCodes.push(code);
+        saveData();
+        showMessage(`Code ${code} marked as deleted`, "success");
+        showResults(filterCodes(inputCode.value));
+    } else if (!deletedCodes.includes(code)) {
+        showMessage(`Code ${code} not found in database`, "error");
     } else {
-        mostraMessaggio(`Codice ${codice} già eliminato`, "info");
+        showMessage(`Code ${code} already deleted`, "info");
     }
 }
 
-// Implementa la funzionalità di importazione CSV
-function importaCSV(event) {
+/**
+ * Import codes from CSV
+ */
+function importCSV(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    // Verifica il tipo di file
-    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-        mostraMessaggio("Seleziona un file CSV valido", "errore");
+    // Update file name display
+    document.getElementById("fileNameDisplay").textContent = file.name;
+    
+    // Check file type with relaxed constraints
+    const isCSV = 
+        file.type === 'text/csv' || 
+        file.type === 'application/csv' ||
+        file.type === 'text/plain' ||
+        file.name.endsWith('.csv') || 
+        file.name.endsWith('.txt');
+    
+    if (!isCSV) {
+        showMessage("Please select a valid CSV file (or .txt with comma-separated values)", "error");
         fileInput.value = "";
         return;
     }
@@ -274,99 +353,116 @@ function importaCSV(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const contenuto = e.target.result;
-            const righe = contenuto.split(/\r?\n/);
-            let codiciImportati = 0;
+            const content = e.target.result;
+            const lines = content.split(/\r?\n/);
+            let importedCodes = 0;
+            let duplicateCodes = 0;
+            let invalidCodes = 0;
             
-            righe.forEach(riga => {
-                // Assume che ogni riga contenga un codice (primo campo)
-                const campi = riga.split(',');
-                const codice = campi[0].trim();
+            lines.forEach(line => {
+                // Assume each line contains a code (first field)
+                const fields = line.split(',');
+                const code = fields[0].trim();
                 
-                if (codice && !codiciAttivi.includes(codice) && !codiciEliminati.includes(codice)) {
-                    codiciAttivi.push(codice);
-                    codiciImportati++;
+                // Validate the code
+                if (code && code !== "Code" && !isNaN(code)) {
+                    if (!activeCodes.includes(code) && !deletedCodes.includes(code)) {
+                        activeCodes.push(code);
+                        importedCodes++;
+                    } else {
+                        duplicateCodes++;
+                    }
+                } else if (code && code !== "Code") {
+                    invalidCodes++;
                 }
             });
             
-            salvaDati();
-            mostraRisultati(filtraCodici(inputCodice.value));
-            mostraMessaggio(`Importati ${codiciImportati} nuovi codici`, "successo");
+            // Only save if we imported any codes
+            if (importedCodes > 0) {
+                saveData();
+                showResults(filterCodes(inputCode.value));
+                showMessage(`Imported ${importedCodes} new codes`, "success");
+            } else {
+                let message = "No valid new codes found in file";
+                if (duplicateCodes > 0) {
+                    message += ` (${duplicateCodes} duplicates found)`;
+                }
+                if (invalidCodes > 0) {
+                    message += ` (${invalidCodes} invalid entries)`;
+                }
+                showMessage(message, "info");
+            }
         } catch (error) {
-            mostraMessaggio("Errore durante l'importazione: " + error.message, "errore");
+            console.error("Import error:", error);
+            showMessage("Error during import: " + error.message, "error");
         }
         
-        // Reset dell'input file
+        // Reset file input
         fileInput.value = "";
     };
     
     reader.readAsText(file);
 }
 
-// Mostra messaggi di feedback
-function mostraMessaggio(messaggio, tipo = "info") {
-    // Rimuovi messaggi precedenti
-    const vecchioMessaggio = document.querySelector(".messaggio");
-    if (vecchioMessaggio) {
-        vecchioMessaggio.remove();
+/**
+ * Show feedback messages
+ */
+function showMessage(message, type = "info") {
+    // Remove previous messages
+    const oldMessage = document.querySelector(".message");
+    if (oldMessage) {
+        oldMessage.remove();
     }
     
-    // Crea nuovo messaggio
-    const divMessaggio = document.createElement("div");
-    divMessaggio.className = `messaggio ${tipo}`;
-    divMessaggio.textContent = messaggio;
+    // Create new message
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${type}`;
+    messageDiv.textContent = message;
     
-    // Inserisci dopo h1
+    // Insert after h1
     const h1 = document.querySelector("h1");
-    h1.parentNode.insertBefore(divMessaggio, h1.nextSibling);
+    h1.parentNode.insertBefore(messageDiv, h1.nextSibling);
     
-    // Rimuovi dopo 3 secondi
+    // Remove after 3 seconds
     setTimeout(() => {
-        divMessaggio.classList.add("fade-out");
-        setTimeout(() => divMessaggio.remove(), 500);
+        messageDiv.classList.add("fade-out");
+        setTimeout(() => messageDiv.remove(), 500);
     }, 3000);
 }
 
-// Salva i dati nel Local Storage
-function salvaDati() {
-    localStorage.setItem(`codiciAttivi_${settimanaSelezionata}`, JSON.stringify(codiciAttivi));
-    localStorage.setItem(`codiciEliminati_${settimanaSelezionata}`, JSON.stringify(codiciEliminati));
+/**
+ * Save data to Local Storage
+ */
+function saveData() {
+    localStorage.setItem(`activeCodes_${selectedWeek}`, JSON.stringify(activeCodes));
+    localStorage.setItem(`deletedCodes_${selectedWeek}`, JSON.stringify(deletedCodes));
 }
 
-// Funzione per ottenere il numero della settimana
-Date.prototype.getWeekNumber = function() {
-    const d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-};
-
-// Add this code to your existing script.js file
-
-// Mobile focus handling
-function setupMobileFocusBehavior() {
+/**
+ * Mobile focus behavior
+ */
+function setupMobileBehavior() {
     // Only apply these changes on mobile devices
     if (window.innerWidth <= 600) {
         const controlsSection = document.querySelector('.controls');
         const resultsSection = document.querySelector('.results');
         
         // When input is focused
-        inputCodice.addEventListener('focus', function() {
+        inputCode.addEventListener('focus', function() {
             controlsSection.classList.add('minimized');
             resultsSection.classList.add('results-expanded');
             
             // Scroll to make sure input and results are visible
             setTimeout(() => {
                 window.scrollTo({
-                    top: inputCodice.getBoundingClientRect().top + window.scrollY - 20,
+                    top: inputCode.getBoundingClientRect().top + window.scrollY - 20,
                     behavior: 'smooth'
                 });
             }, 300);
         });
         
         // When input loses focus
-        inputCodice.addEventListener('blur', function() {
+        inputCode.addEventListener('blur', function() {
             // Small delay to allow for clicking on results
             setTimeout(() => {
                 // Check if the focus was moved to an element in the results
@@ -379,95 +475,25 @@ function setupMobileFocusBehavior() {
         });
         
         // Make sure results stay visible when interacting with them
-        codiceLista.addEventListener('touchstart', function() {
+        codeList.addEventListener('touchstart', function() {
             controlsSection.classList.add('minimized');
             resultsSection.classList.add('results-expanded');
         });
     }
 }
 
-// Add this to your existing initialization code
-document.addEventListener("DOMContentLoaded", function() {
-    // Your existing initialization code
-    // ...
-    
-    // Add mobile focus behavior
-    setupMobileFocusBehavior();
-    
-    // Handle window resize to apply/remove mobile behavior
-    window.addEventListener('resize', function() {
-        setupMobileFocusBehavior();
-    });
+/**
+ * Get week number from date
+ */
+Date.prototype.getWeekNumber = function() {
+    const d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+};
+
+// Handle window resize for mobile behavior
+window.addEventListener('resize', function() {
+    setupMobileBehavior();
 });
-
-// Modifica la gestione dell'input file per supportare meglio i dispositivi mobili
-
-// 1. Aggiorna l'elemento HTML nel tuo file HTML
-// Cambia la riga:
-// <input type="file" id="fileInput" accept=".csv">
-// Con:
-// <input type="file" id="fileInput" accept=".csv,.txt,text/csv,application/csv">
-
-// 2. Aggiungi questa funzione al tuo JavaScript per gestire meglio l'importazione
-
-
-// 3. Modifica l'evento di input per CSV per accettare più tipi di file
-function importaCSV(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // Verifica il tipo di file con controlli più permissivi
-    const isCSV = 
-        file.type === 'text/csv' || 
-        file.type === 'application/csv' ||
-        file.type === 'text/plain' ||
-        file.name.endsWith('.csv') || 
-        file.name.endsWith('.txt');
-    
-    if (!isCSV) {
-        mostraMessaggio("Seleziona un file CSV valido (o .txt con valori separati da virgole)", "errore");
-        fileInput.value = "";
-        return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const contenuto = e.target.result;
-            const righe = contenuto.split(/\r?\n/);
-            let codiciImportati = 0;
-            
-            righe.forEach(riga => {
-                // Gestisci anche file senza intestazioni o con formati diversi
-                const campi = riga.split(',');
-                const codice = campi[0].trim();
-                
-                // Ignora righe vuote o intestazioni
-                if (codice && 
-                    codice !== "Codice" && 
-                    !isNaN(codice) &&
-                    !codiciAttivi.includes(codice) && 
-                    !codiciEliminati.includes(codice)) {
-                    codiciAttivi.push(codice);
-                    codiciImportati++;
-                }
-            });
-            
-            if (codiciImportati > 0) {
-                salvaDati();
-                mostraRisultati(filtraCodici(inputCodice.value));
-                mostraMessaggio(`Importati ${codiciImportati} nuovi codici`, "successo");
-            } else {
-                mostraMessaggio("Nessun nuovo codice valido trovato nel file", "info");
-            }
-        } catch (error) {
-            console.error("Errore importazione:", error);
-            mostraMessaggio("Errore durante l'importazione: " + error.message, "errore");
-        }
-        
-        // Reset dell'input file
-        fileInput.value = "";
-    };
-    
-    reader.readAsText(file);
-}
