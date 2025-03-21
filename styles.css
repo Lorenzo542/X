@@ -1,4 +1,36 @@
-/* Main styles for Package Tracking Code Manager */
+.scroll-top-btn {
+    position: fixed;
+    bottom: -60px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--accent-color);
+    color: var(--dark-color);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 90;
+}
+
+.scroll-top-btn.visible {
+    bottom: 20px;
+    opacity: 1;
+}
+
+/* Hide footer and settings-section when scrolled */
+.scrolled-state .settings-section,
+.scrolled-state footer {
+    opacity: 0;
+    transform: translateY(100%);
+    pointer-events: none;
+}/* Main styles for Package Tracking Code Manager */
 :root {
     --primary-color: #004B87; /* JYSK-like blue */
     --secondary-color: #0075BE; /* Lighter blue */
@@ -350,32 +382,39 @@ footer {
     padding: 15px;
     font-size: 0.9rem;
     border-top: 3px solid var(--accent-color);
+    position: static; /* Remove fixed positioning */
 }
 
-.settings-section {
+.footer-sync-settings {
+    background-color: rgba(255, 255, 255, 0.1);
     padding: 15px;
-    background-color: var(--light-color);
-    border-top: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+    text-align: left;
 }
 
-.settings-section h2 {
-    margin-bottom: 15px;
-    font-size: 1.2rem;
-    color: var(--primary-color);
+.footer-sync-settings h3 {
+    color: white;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
     font-weight: 600;
 }
 
-#mergeStrategy {
-    margin-bottom: 10px;
-    padding: 10px 12px;
-    border: 1px solid var(--medium-gray);
-    border-radius: var(--border-radius);
-    width: 100%;
+.footer-sync-settings label {
+    color: white;
 }
 
-#forceSyncButton {
+.footer-sync-settings select {
+    margin-bottom: 10px;
+    background-color: white;
+    border: none;
+}
+
+.footer-sync-settings button {
     width: 100%;
-    background-color: var(--primary-color);
+    background-color: var(--accent-color);
+    color: var(--dark-color);
+    font-weight: 600;
 }
 
 /* Firebase auth styles */
@@ -454,14 +493,73 @@ footer {
     to { transform: rotate(360deg); }
 }
 
-/* Special styling for mobile */
-.minimized {
-    padding: 10px;
+/* Mobile scroll behavior styles */
+.header-hidden {
+    transform: translateY(-100%);
 }
 
-.results-expanded {
-    max-height: calc(100vh - 200px);
-    overflow-y: auto;
+.controls-hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none; /* Prevent interaction with hidden controls */
+}
+
+/* Delete any leftover styles for settings section that's not used anymore */
+.settings-section {
+    display: none; /* Hide any old settings section that might still be in the DOM */
+}
+
+.results-full {
+    margin-top: 0 !important;
+    height: 100% !important;
+    padding-top: 60px !important; /* Make room for floating input */
+    padding-bottom: 10px !important; /* Remove extra padding at bottom */
+}
+
+.floating-input-container {
+    position: fixed;
+    top: -60px; /* Start off-screen */
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    background-color: var(--primary-color);
+    z-index: 100;
+    transition: top 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.floating-input-visible {
+    top: 0;
+}
+
+#floatingInput {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Mobile transitions for scroll effect */
+@media (max-width: 600px) {
+    header, .controls, .results, .settings-section, footer {
+        transition: all 0.3s ease;
+    }
+    
+    /* Ensure footer and settings don't interfere with the list */
+    footer, .settings-section {
+        z-index: 1;
+    }
+    
+    .results {
+        z-index: 2; /* Higher than footer and settings */
+    }
+    
+    .floating-input-container {
+        z-index: 100; /* Highest z-index */
+    }
 }
 
 /* Mobile optimizations for stability */
@@ -518,18 +616,17 @@ footer {
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        height: calc(100% - 230px); /* Adjust based on your header + controls + footer height */
+        /* Remove height constraint since footer is not fixed */
+        height: auto;
+        padding-bottom: 20px;
     }
     
     .results-expanded {
         margin-top: 110px; /* Reduced controls height when minimized */
-        height: calc(100% - 170px);
     }
     
     footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
+        position: static; /* Not fixed */
         width: 100%;
     }
     

@@ -612,39 +612,95 @@ function saveToLocalOnly() {
 }
 
 /**
- * Mobile focus behavior (completely redesigned for stability)
+ * Mobile focus behavior (completely redesigned for mobile scroll)
  */
 function setupMobileBehavior() {
     // Only apply these changes on mobile devices
     if (window.innerWidth <= 600) {
         const controlsSection = document.querySelector('.controls');
         const resultsSection = document.querySelector('.results');
+        const header = document.querySelector('header');
+        const footer = document.querySelector('footer');
+        const codeInputContainer = document.createElement('div');
         
         if (!controlsSection || !resultsSection) return;
         
-        // Prevent iOS body scrolling
+        // Create a floating container for the code input
+        codeInputContainer.className = 'floating-input-container';
+        codeInputContainer.innerHTML = `
+            <input type="number" id="floatingInput" placeholder="Search or enter code..." autocomplete="off">
+        `;
+        document.body.appendChild(codeInputContainer);
+        
+        const floatingInput = document.getElementById('floatingInput');
+        
+        // Sync the floating input with the main input
+        floatingInput.addEventListener('input', function() {
+            inputCode.value = this.value;
+            inputCode.dispatchEvent(new Event('input'));
+        });
+        
+        // Sync main input with floating input
+        inputCode.addEventListener('input', function() {
+            floatingInput.value = this.value;
+        });
+        
+        // Handle scroll event on mobile
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 10) {
+                // When scrolling down, hide everything except the floating input and results
+                document.body.classList.add('scrolled-state');
+                header.classList.add('header-hidden');
+                controlsSection.classList.add('controls-hidden');
+                resultsSection.classList.add('results-full');
+                codeInputContainer.classList.add('floating-input-visible');
+                
+                // Hide footer when scrolled but it's not fixed
+                if (footer) {
+                    footer.style.display = 'none';
+                }
+            } else {
+                // When at the top, show everything
+                document.body.classList.remove('scrolled-state');
+                header.classList.remove('header-hidden');
+                controlsSection.classList.remove('controls-hidden');
+                resultsSection.classList.remove('results-full');
+                codeInputContainer.classList.remove('floating-input-visible');
+                
+                // Show footer
+                if (footer) {
+                    footer.style.display = '';
+                }
+            }
+        });
+        
+        // Add a button to scroll back to top
+        const scrollTopBtn = document.createElement('button');
+        scrollTopBtn.className = 'scroll-top-btn';
+        scrollTopBtn.innerHTML = '↑';
+        scrollTopBtn.title = 'Scroll to top';
+        scrollTopBtn.addEventListener('click', function() {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+        document.body.appendChild(scrollTopBtn);
+        
+        // Show scroll-to-top button only when scrolled
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 100) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
+        
+        // Prevent iOS body scrolling issues (but allow scrolling in results)
         document.body.addEventListener('touchmove', function(e) {
             if (e.target.closest('.results')) {
                 return; // Allow scrolling in results
-            } else {
+            } else if (!e.target.closest('.floating-input-container')) {
                 e.preventDefault(); // Prevent body scrolling
             }
         }, { passive: false });
-        
-        // When input is focused, just show results
-        inputCode.addEventListener('focus', function() {
-            controlsSection.classList.add('minimized');
-            resultsSection.classList.add('results-expanded');
-        });
-        
-        // Handle layout stability when keyboard appears on iOS
-        window.addEventListener('resize', function() {
-            // Give time for iOS keyboard to fully appear or disappear
-            setTimeout(() => {
-                document.body.scrollTop = 0;
-                document.documentElement.scrollTop = 0;
-            }, 50);
-        });
         
         // Disable auto-zooming on input fields
         const metaViewport = document.querySelector('meta[name=viewport]');
@@ -817,37 +873,44 @@ function changeWeek() {
  * Add settings for sync
  */
 function addSyncSettings() {
-    // Create settings section
-    const settingsDiv = document.createElement('div');
-    settingsDiv.className = 'settings-section';
-    settingsDiv.innerHTML = `
-        <h2>Sync Settings</h2>
-        <div class="control-group">
-            <label for="mergeStrategy">When syncing data:</label>
-            <select id="mergeStrategy">
-                <option value="replace">Cloud data overrides local data</option>
-                <option value="merge">Merge cloud and local data (keep both)</option>
-            </select>
+    // Create settings section in footer
+    const settingsContent = `
+        <div class="footer-sync-settings">
+            <h3>Sync Settings</h3>
+            <div class="control-group">
+                <label for="mergeStrategy">When syncing data:</label>
+                <select id="mergeStrategy">
+                    <option value="replace">Cloud data overrides local data</option>
+                    <option value="merge">Merge cloud and local data (keep both)</option>
+                </select>
+            </div>
+            <button id="forceSyncButton">Force Sync Now</button>
         </div>
-        <button id="forceSyncButton">Force Sync Now</button>
     `;
     
-    // Insert before footer
+    // Insert into footer
     const footer = document.querySelector('footer');
-    footer.parentNode.insertBefore(settingsDiv, footer);
+    if (footer) {
+        footer.innerHTML = settingsContent + footer.innerHTML;
+    }
     
     // Set up event handlers
     const mergeStrategy = document.getElementById('mergeStrategy');
-    mergeStrategy.value = localStorage.getItem('dataMergeStrategy') || 'replace';
-    mergeStrategy.addEventListener('change', function() {
-        localStorage.setItem('dataMergeStrategy', this.value);
-    });
+    if (mergeStrategy) {
+        mergeStrategy.value = localStorage.getItem('dataMergeStrategy') || 'replace';
+        mergeStrategy.addEventListener('change', function() {
+            localStorage.setItem('dataMergeStrategy', this.value);
+        });
+    }
     
-    document.getElementById('forceSyncButton').addEventListener('click', function() {
-        if (syncEnabled && currentUser) {
-            loadCloudData();
-        } else {
-            showMessage("Please login to sync data", "info");
-        }
-    });
+    const forceSyncButton = document.getElementById('forceSyncButton');
+    if (forceSyncButton) {
+        forceSyncButton.addEventListener('click', function() {
+            if (syncEnabled && currentUser) {
+                loadCloudData();
+            } else {
+                showMessage("Please login to sync data", "info");
+            }
+        });
+    }
 }
