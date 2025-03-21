@@ -629,9 +629,15 @@ function importCSV(event) {
 }
 
 /**
- * Show feedback messages
+ * Show feedback messages (only for critical information)
  */
 function showMessage(message, type = "info") {
+    // Only show critical messages
+    if (type !== "error" && type !== "critical-info") {
+        console.log(message); // Log to console instead
+        return;
+    }
+    
     // Remove previous messages
     const oldMessage = document.querySelector(".message");
     if (oldMessage) {
