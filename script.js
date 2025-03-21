@@ -612,7 +612,7 @@ function saveToLocalOnly() {
 }
 
 /**
- * Mobile focus behavior (completely redesigned for mobile scroll)
+ * Mobile focus behavior (completely redesigned for natural scrolling)
  */
 function setupMobileBehavior() {
     // Only apply these changes on mobile devices
@@ -648,29 +648,15 @@ function setupMobileBehavior() {
         // Handle scroll event on mobile
         window.addEventListener('scroll', function() {
             if (window.scrollY > 10) {
-                // When scrolling down, hide everything except the floating input and results
-                document.body.classList.add('scrolled-state');
+                // When scrolling down, show floating input
                 header.classList.add('header-hidden');
                 controlsSection.classList.add('controls-hidden');
-                resultsSection.classList.add('results-full');
                 codeInputContainer.classList.add('floating-input-visible');
-                
-                // Hide footer when scrolled but it's not fixed
-                if (footer) {
-                    footer.style.display = 'none';
-                }
             } else {
-                // When at the top, show everything
-                document.body.classList.remove('scrolled-state');
+                // When at the top, hide floating input
                 header.classList.remove('header-hidden');
                 controlsSection.classList.remove('controls-hidden');
-                resultsSection.classList.remove('results-full');
                 codeInputContainer.classList.remove('floating-input-visible');
-                
-                // Show footer
-                if (footer) {
-                    footer.style.display = '';
-                }
             }
         });
         
@@ -692,21 +678,6 @@ function setupMobileBehavior() {
                 scrollTopBtn.classList.remove('visible');
             }
         });
-        
-        // Prevent iOS body scrolling issues (but allow scrolling in results)
-        document.body.addEventListener('touchmove', function(e) {
-            if (e.target.closest('.results')) {
-                return; // Allow scrolling in results
-            } else if (!e.target.closest('.floating-input-container')) {
-                e.preventDefault(); // Prevent body scrolling
-            }
-        }, { passive: false });
-        
-        // Disable auto-zooming on input fields
-        const metaViewport = document.querySelector('meta[name=viewport]');
-        if (metaViewport) {
-            metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-        }
     }
 }
 

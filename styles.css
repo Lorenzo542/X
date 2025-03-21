@@ -567,9 +567,8 @@ footer {
     body {
         padding: 0;
         overflow-x: hidden;
-        position: fixed;
+        position: static; /* Change from fixed to static */
         width: 100%;
-        height: 100%;
     }
     
     .container {
@@ -577,8 +576,8 @@ footer {
         box-shadow: none;
         display: flex;
         flex-direction: column;
-        height: 100%;
-        overflow: hidden;
+        min-height: 100vh;
+        overflow-y: auto; /* Allow container to scroll */
     }
     
     header {
@@ -605,29 +604,17 @@ footer {
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    .controls.minimized {
-        height: auto;
-        overflow: visible;
-    }
-    
     .results {
         margin-top: 170px; /* Header + controls estimated height */
         padding: 10px;
         flex: 1;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        /* Remove height constraint since footer is not fixed */
-        height: auto;
-        padding-bottom: 20px;
-    }
-    
-    .results-expanded {
-        margin-top: 110px; /* Reduced controls height when minimized */
+        min-height: 50vh;
     }
     
     footer {
-        position: static; /* Not fixed */
+        position: static; /* Ensure footer is static */
         width: 100%;
+        margin-top: auto; /* Push to the bottom if content is short */
     }
     
     #submit {
