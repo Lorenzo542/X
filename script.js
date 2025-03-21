@@ -612,18 +612,14 @@ function saveToLocalOnly() {
 }
 
 /**
- * Mobile focus behavior (completely redesigned for natural scrolling)
+ * Mobile focus behavior (simplified)
  */
 function setupMobileBehavior() {
     // Only apply these changes on mobile devices
     if (window.innerWidth <= 600) {
         const controlsSection = document.querySelector('.controls');
-        const resultsSection = document.querySelector('.results');
         const header = document.querySelector('header');
-        const footer = document.querySelector('footer');
         const codeInputContainer = document.createElement('div');
-        
-        if (!controlsSection || !resultsSection) return;
         
         // Create a floating container for the code input
         codeInputContainer.className = 'floating-input-container';
@@ -648,12 +644,12 @@ function setupMobileBehavior() {
         // Handle scroll event on mobile
         window.addEventListener('scroll', function() {
             if (window.scrollY > 10) {
-                // When scrolling down, show floating input
+                // When scrolling down, show floating input and hide header/controls
                 header.classList.add('header-hidden');
                 controlsSection.classList.add('controls-hidden');
                 codeInputContainer.classList.add('floating-input-visible');
             } else {
-                // When at the top, hide floating input
+                // When at the top, show header/controls and hide floating input
                 header.classList.remove('header-hidden');
                 controlsSection.classList.remove('controls-hidden');
                 codeInputContainer.classList.remove('floating-input-visible');
@@ -703,32 +699,14 @@ window.addEventListener('resize', function() {
  * Set up authentication UI and logic
  */
 function setupAuth() {
-    // Add login button to header
-    const header = document.querySelector('header');
-    if (!header) return;
-    
-    // Create login button if it doesn't exist
+    // Use the existing login button and sync status elements
     let loginButton = document.getElementById('loginButton');
-    if (!loginButton) {
-        loginButton = document.createElement('button');
-        loginButton.textContent = 'Login to Sync';
-        loginButton.id = 'loginButton';
-        loginButton.className = 'sync-button';
-        header.appendChild(loginButton);
-    }
-    
-    // Create sync status indicator if it doesn't exist
     let syncStatus = document.getElementById('syncStatus');
-    if (!syncStatus) {
-        syncStatus = document.createElement('div');
-        syncStatus.id = 'syncStatus';
-        syncStatus.className = 'sync-status offline';
-        syncStatus.innerHTML = '<span>Offline</span>';
-        header.appendChild(syncStatus);
-    }
     
-    // Add login click handler
-    loginButton.addEventListener('click', handleLogin);
+    if (loginButton && syncStatus) {
+        // Add login click handler
+        loginButton.addEventListener('click', handleLogin);
+    }
     
     // Register for Firebase auth changes
     firebaseManager.addListener(handleFirebaseEvent);
@@ -844,28 +822,7 @@ function changeWeek() {
  * Add settings for sync
  */
 function addSyncSettings() {
-    // Create settings section in footer
-    const settingsContent = `
-        <div class="footer-sync-settings">
-            <h3>Sync Settings</h3>
-            <div class="control-group">
-                <label for="mergeStrategy">When syncing data:</label>
-                <select id="mergeStrategy">
-                    <option value="replace">Cloud data overrides local data</option>
-                    <option value="merge">Merge cloud and local data (keep both)</option>
-                </select>
-            </div>
-            <button id="forceSyncButton">Force Sync Now</button>
-        </div>
-    `;
-    
-    // Insert into footer
-    const footer = document.querySelector('footer');
-    if (footer) {
-        footer.innerHTML = settingsContent + footer.innerHTML;
-    }
-    
-    // Set up event handlers
+    // Setup event handlers for existing elements in the HTML
     const mergeStrategy = document.getElementById('mergeStrategy');
     if (mergeStrategy) {
         mergeStrategy.value = localStorage.getItem('dataMergeStrategy') || 'replace';
