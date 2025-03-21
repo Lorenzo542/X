@@ -612,7 +612,7 @@ function saveToLocalOnly() {
 }
 
 /**
- * Mobile focus behavior (simplified)
+ * Mobile focus behavior (completely redesigned for stability)
  */
 function setupMobileBehavior() {
     // Only apply these changes on mobile devices
@@ -622,30 +622,35 @@ function setupMobileBehavior() {
         
         if (!controlsSection || !resultsSection) return;
         
-        // When input is focused
+        // Prevent iOS body scrolling
+        document.body.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.results')) {
+                return; // Allow scrolling in results
+            } else {
+                e.preventDefault(); // Prevent body scrolling
+            }
+        }, { passive: false });
+        
+        // When input is focused, just show results
         inputCode.addEventListener('focus', function() {
             controlsSection.classList.add('minimized');
             resultsSection.classList.add('results-expanded');
         });
         
-        // When input loses focus
-        inputCode.addEventListener('blur', function() {
-            // Small delay to allow for clicking on results
+        // Handle layout stability when keyboard appears on iOS
+        window.addEventListener('resize', function() {
+            // Give time for iOS keyboard to fully appear or disappear
             setTimeout(() => {
-                // Check if the focus was moved to an element in the results
-                const activeElement = document.activeElement;
-                if (!resultsSection.contains(activeElement)) {
-                    controlsSection.classList.remove('minimized');
-                    resultsSection.classList.remove('results-expanded');
-                }
-            }, 100); // Reduced timeout
+                document.body.scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+            }, 50);
         });
         
-        // Make sure results stay visible when interacting with them
-        codeList.addEventListener('touchstart', function() {
-            controlsSection.classList.add('minimized');
-            resultsSection.classList.add('results-expanded');
-        });
+        // Disable auto-zooming on input fields
+        const metaViewport = document.querySelector('meta[name=viewport]');
+        if (metaViewport) {
+            metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
     }
 }
 

@@ -1,16 +1,16 @@
 /* Main styles for Package Tracking Code Manager */
 :root {
-    --primary-color: #2c3e50;
-    --secondary-color: #3498db;
-    --success-color: #2ecc71;
-    --warning-color: #f39c12;
-    --error-color: #e74c3c;
-    --info-color: #3498db;
-    --light-color: #ecf0f1;
-    --dark-color: #34495e;
-    --gray-color: #95a5a6;
-    --border-radius: 4px;
-    /* Removed transition speed variable */
+    --primary-color: #004B87; /* JYSK-like blue */
+    --secondary-color: #0075BE; /* Lighter blue */
+    --accent-color: #FFCC00; /* Yellow accent */
+    --success-color: #2B8738; /* Green */
+    --warning-color: #FFBC3D; /* Orange */
+    --error-color: #D42114; /* Red */
+    --light-color: #F6F6F6; /* Light gray */
+    --medium-gray: #E0E0E0; /* Medium gray */
+    --dark-color: #333333; /* Dark gray/almost black */
+    --text-color: #333333; /* Main text color */
+    --border-radius: 2px; /* Sharper corners */
 }
 
 * {
@@ -20,69 +20,76 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Open Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    background-color: #f5f5f5;
-    color: var(--primary-color);
-    padding: 20px;
+    background-color: var(--light-color);
+    color: var(--text-color);
+    padding: 0;
     max-width: 100%;
     overflow-x: hidden;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0 auto;
     background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
 header {
     background-color: var(--primary-color);
     color: white;
-    padding: 20px;
+    padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 3px solid var(--accent-color);
 }
 
 header h1 {
     margin: 0;
-    font-size: 1.8rem;
-    font-weight: 500;
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
 }
 
 .controls {
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    /* Removed transition */
-}
-
-.minimized {
-    padding: 10px;
-    /* Removed transition */
+    padding: 15px;
+    border-bottom: 1px solid var(--medium-gray);
+    background-color: white;
 }
 
 .control-group {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 label {
     display: block;
     margin-bottom: 5px;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--primary-color);
 }
 
 input, select, button {
-    border: 1px solid #ddd;
+    border: 1px solid var(--medium-gray);
     border-radius: var(--border-radius);
-    padding: 8px 12px;
+    padding: 10px 12px;
     font-size: 1rem;
+    font-family: inherit;
 }
 
 input, select {
     width: 100%;
+    background-color: white;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px rgba(0, 117, 190, 0.2);
 }
 
 input[type="number"] {
@@ -115,22 +122,26 @@ button {
     color: white;
     border: none;
     cursor: pointer;
-    /* Removed transition */
     margin-top: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 button:hover {
-    background-color: #2980b9;
-}
-
-button:active {
-    background-color: #1f618d;
+    background-color: var(--primary-color);
 }
 
 #submit {
     width: 100%;
-    padding: 10px;
-    font-weight: 500;
+    padding: 12px;
+    font-weight: 600;
+    background-color: var(--accent-color);
+    color: var(--dark-color);
+}
+
+#submit:hover {
+    background-color: #EABB00; /* Slightly darker yellow */
 }
 
 .file-input-wrapper {
@@ -142,11 +153,12 @@ button:active {
 .file-button {
     flex: 0 0 auto;
     margin-top: 0;
+    background-color: var(--secondary-color);
 }
 
 #fileNameDisplay {
     flex: 1;
-    color: var(--gray-color);
+    color: #777;
     font-size: 0.9rem;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -156,6 +168,7 @@ button:active {
 .actions {
     display: flex;
     gap: 10px;
+    margin-top: 15px;
 }
 
 .actions button {
@@ -167,24 +180,29 @@ button:active {
 }
 
 #resetBtn:hover {
-    background-color: #c0392b;
+    background-color: #b91c0f;
+}
+
+#exportBtn {
+    background-color: var(--success-color);
+}
+
+#exportBtn:hover {
+    background-color: #1f6b2a;
 }
 
 .results {
-    padding: 20px;
-    /* Removed transition */
-}
-
-.results-expanded {
-    max-height: calc(100vh - 200px);
-    overflow-y: auto;
-    /* Removed transition */
+    padding: 15px;
+    background-color: white;
 }
 
 .results h2 {
     margin-bottom: 15px;
-    font-weight: 500;
-    color: var(--dark-color);
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    border-bottom: 2px solid var(--medium-gray);
+    padding-bottom: 8px;
 }
 
 .code-list ul {
@@ -192,20 +210,19 @@ button:active {
 }
 
 .code-list li {
-    padding: 10px;
-    border-left: 4px solid transparent;
-    margin-bottom: 5px;
-    background-color: #f8f9fa;
+    padding: 12px;
+    border-left: 3px solid transparent;
+    margin-bottom: 8px;
+    background-color: var(--light-color);
     border-radius: var(--border-radius);
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    /* Removed transition */
 }
 
 .code-list li:hover {
-    background-color: #e9ecef;
+    background-color: #EDF5FB; /* Very light blue */
 }
 
 .code-list li.active {
@@ -214,16 +231,18 @@ button:active {
 
 .code-list li.deleted {
     border-left-color: var(--error-color);
-    color: var(--gray-color);
+    color: #777;
 }
 
 .quantity-badge {
     display: inline-block;
-    background-color: #e9ecef;
-    padding: 2px 6px;
-    border-radius: 4px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
     margin-left: 10px;
     font-size: 0.8rem;
+    font-weight: 600;
 }
 
 .button-group {
@@ -232,18 +251,33 @@ button:active {
 }
 
 .qty-btn, .quick-delete-btn {
-    padding: 2px 8px;
+    padding: 4px 10px;
     margin: 0;
-    font-size: 0.9rem;
-    background-color: #e9ecef;
+    font-size: 1rem;
+    min-width: 30px;
+    background-color: var(--light-color);
     color: var(--dark-color);
+    border: 1px solid var(--medium-gray);
+}
+
+.qty-increase {
+    background-color: #EBF7EF; /* Light green */
+    color: var(--success-color);
+    font-weight: bold;
 }
 
 .qty-decrease {
     font-size: 1.2rem;
     font-weight: bold;
-    padding: 0px 9px;
-    line-height: 1.2;
+    padding: 0px 11px;
+    line-height: 1.4;
+    background-color: #FFF5E6; /* Light orange */
+    color: #E58A00; /* Dark orange */
+}
+
+.quick-delete-btn {
+    background-color: #FFEBEB; /* Light red */
+    color: var(--error-color);
 }
 
 .qty-increase:hover {
@@ -253,7 +287,7 @@ button:active {
 
 .qty-decrease:hover {
     background-color: var(--warning-color);
-    color: white;
+    color: var(--dark-color);
 }
 
 .quick-delete-btn:hover {
@@ -263,16 +297,20 @@ button:active {
 
 .stats {
     margin-top: 20px;
-    padding: 10px;
-    background-color: #f8f9fa;
+    padding: 12px;
+    background-color: #EDF5FB; /* Very light blue */
     border-radius: var(--border-radius);
     font-size: 0.9rem;
+    border-left: 3px solid var(--primary-color);
 }
 
 .no-results {
-    color: var(--gray-color);
+    color: #777;
     text-align: center;
-    padding: 20px;
+    padding: 30px;
+    font-style: italic;
+    background-color: var(--light-color);
+    border-radius: var(--border-radius);
 }
 
 .message {
@@ -280,23 +318,25 @@ button:active {
     margin: 10px 0;
     border-radius: var(--border-radius);
     text-align: center;
-    /* Keep this transition but make it faster */
     transition: opacity 0.2s;
 }
 
 .success {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: #EBF7EF; /* Light green */
+    color: var(--success-color);
+    border-left: 3px solid var(--success-color);
 }
 
 .error {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #FFEBEB; /* Light red */
+    color: var(--error-color);
+    border-left: 3px solid var(--error-color);
 }
 
 .info {
-    background-color: #d1ecf1;
-    color: #0c5460;
+    background-color: #EDF5FB; /* Very light blue */
+    color: var(--primary-color);
+    border-left: 3px solid var(--secondary-color);
 }
 
 .fade-out {
@@ -309,50 +349,61 @@ footer {
     text-align: center;
     padding: 15px;
     font-size: 0.9rem;
+    border-top: 3px solid var(--accent-color);
 }
 
 .settings-section {
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-top: 1px solid #eee;
+    padding: 15px;
+    background-color: var(--light-color);
+    border-top: 1px solid var(--medium-gray);
 }
 
 .settings-section h2 {
     margin-bottom: 15px;
     font-size: 1.2rem;
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
 #mergeStrategy {
     margin-bottom: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    width: 100%;
 }
 
 #forceSyncButton {
     width: 100%;
+    background-color: var(--primary-color);
 }
 
 /* Firebase auth styles */
 .sync-button {
-    background-color: #4285F4;
-    color: white;
+    background-color: var(--accent-color);
+    color: var(--dark-color);
     border: none;
-    padding: 5px 12px;
+    padding: 6px 15px;
     border-radius: var(--border-radius);
     font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .sync-button:hover {
-    background-color: #3367D6;
+    background-color: #EABB00;
 }
 
 .sync-status {
     margin-left: 10px;
     font-size: 0.8rem;
-    padding: 3px 8px;
-    border-radius: 20px;
+    padding: 3px 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
+    font-weight: 600;
 }
 
 .sync-status span {
@@ -360,8 +411,8 @@ footer {
 }
 
 .sync-status.offline {
-    background-color: var(--gray-color);
-    color: white;
+    background-color: #E0E0E0; /* Medium gray */
+    color: #777;
 }
 
 .sync-status.online {
@@ -376,7 +427,7 @@ footer {
 
 .sync-status.syncing {
     background-color: var(--warning-color);
-    color: white;
+    color: var(--dark-color);
 }
 
 /* Loading state */
@@ -390,9 +441,9 @@ footer {
     position: absolute;
     right: 10px;
     top: 50%;
-    width: 12px;
-    height: 12px;
-    margin-top: -6px;
+    width: 14px;
+    height: 14px;
+    margin-top: -7px;
     border: 2px solid white;
     border-top-color: transparent;
     border-radius: 50%;
@@ -403,19 +454,83 @@ footer {
     to { transform: rotate(360deg); }
 }
 
-/* Responsive adjustments */
+/* Special styling for mobile */
+.minimized {
+    padding: 10px;
+}
+
+.results-expanded {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+/* Mobile optimizations for stability */
 @media (max-width: 600px) {
     body {
         padding: 0;
+        overflow-x: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
     }
     
     .container {
         border-radius: 0;
         box-shadow: none;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 10;
     }
     
     header h1 {
         font-size: 1.4rem;
+    }
+    
+    .controls {
+        position: fixed;
+        top: 58px; /* Header height */
+        left: 0;
+        width: 100%;
+        z-index: 9;
+        background: white;
+        padding: 10px;
+        height: auto;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .controls.minimized {
+        height: auto;
+        overflow: visible;
+    }
+    
+    .results {
+        margin-top: 170px; /* Header + controls estimated height */
+        padding: 10px;
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        height: calc(100% - 230px); /* Adjust based on your header + controls + footer height */
+    }
+    
+    .results-expanded {
+        margin-top: 110px; /* Reduced controls height when minimized */
+        height: calc(100% - 170px);
+    }
+    
+    footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
     }
     
     #submit {
@@ -426,13 +541,7 @@ footer {
         flex-direction: column;
     }
     
-    .minimized {
-        padding: 10px;
-        max-height: 120px;
-        overflow: hidden;
-    }
-    
-    .results-expanded {
-        padding-top: 30px;
+    .code-list li {
+        padding: 15px 10px;
     }
 }
